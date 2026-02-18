@@ -1,0 +1,4 @@
+source;share/mysimrobot/local_setup.bash
+source;share/mysimrobot/local_setup.dsv
+source;share/mysimrobot/local_setup.sh
+source;share/mysimrobot/local_setup.zsh

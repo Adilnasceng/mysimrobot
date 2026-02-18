@@ -1,0 +1,9 @@
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/uninstall.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/mysimrobot_uninstall.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/test.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/edit_cache.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/rebuild_cache.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/list_install_components.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/install.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/install/local.dir
+/home/adil/Masaüstü/mysimrobot/build/mysimrobot/CMakeFiles/install/strip.dir
