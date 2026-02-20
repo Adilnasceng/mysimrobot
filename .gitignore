@@ -1,0 +1,14 @@
+# ROS 2 colcon
+build/
+install/
+log/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode (opsiyonel)
+.vscode/
+
+# OS
+.DS_Store

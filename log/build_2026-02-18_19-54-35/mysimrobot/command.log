@@ -1,6 +1,0 @@
-Invoking command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/adil/Masaüstü/mysimrobot -DCMAKE_INSTALL_PREFIX=/home/adil/Masaüstü/mysimrobot/install/mysimrobot
-Invoked command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/adil/Masaüstü/mysimrobot -DCMAKE_INSTALL_PREFIX=/home/adil/Masaüstü/mysimrobot/install/mysimrobot
-Invoking command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/adil/Masaüstü/mysimrobot/build/mysimrobot -- -j16 -l16
-Invoked command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/adil/Masaüstü/mysimrobot/build/mysimrobot -- -j16 -l16
-Invoking command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/adil/Masaüstü/mysimrobot/build/mysimrobot
-Invoked command in '/home/adil/Masaüstü/mysimrobot/build/mysimrobot' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/adil/Masaüstü/mysimrobot/build/mysimrobot
