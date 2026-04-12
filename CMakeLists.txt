@@ -25,11 +25,12 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  DIRECTORY config description launch worlds
+  DIRECTORY config description launch worlds scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(PROGRAMS
+  scripts/obstacle_wait_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

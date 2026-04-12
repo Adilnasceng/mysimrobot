@@ -188,6 +188,17 @@ def generate_launch_description():
                 parameters=[{'use_sim_time': use_sim_time},
                             {'autostart': autostart},
                             {'node_names': lifecycle_nodes}]),
+            Node(
+                package='mysimrobot',
+                executable='obstacle_wait_node.py',
+                name='obstacle_wait_node',
+                output='screen',
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'obstacle_distance': 1.0,
+                    'obstacle_angle': 0.524,
+                    'wait_duration': 15.0,
+                }]),
         ]
     )
 
