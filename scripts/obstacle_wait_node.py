@@ -33,6 +33,8 @@ class ObstacleWaitNode(Node):
         self.obstacle_in_front = False
         self.blocking          = False
         self.block_start       = None
+        self.scanning_active   = True     # timeout sonrası geçici olarak devre dışı kalır
+        self._rescan_timer     = None
 
         # --- ROS arayüzleri ---
         self.create_subscription(LaserScan, '/scan', self.scan_cb, 10)
@@ -49,6 +51,8 @@ class ObstacleWaitNode(Node):
     # ------------------------------------------------------------------
     def scan_cb(self, msg: LaserScan):
         """Önündeki ±obs_angle konisinde obs_dist'ten yakın engel var mı?"""
+        if not self.scanning_active:
+            return
         self.obstacle_in_front = False
         for i, r in enumerate(msg.ranges):
             angle = msg.angle_min + i * msg.angle_increment
@@ -78,12 +82,21 @@ class ObstacleWaitNode(Node):
                 self.cmd_pub.publish(Twist())
             else:
                 # 15 saniye doldu, engel hâlâ orada → override'ı bırak
-                self.blocking = False
+                self.blocking          = False
+                self.obstacle_in_front = False
+                self.scanning_active   = False   # taramayı geçici durdur
                 self.get_logger().warn(
                     f'{self.wait_dur:.0f}s geçti, engel kalkmadı. '
                     'Nav2 güncel costmap ile yeni rota hesaplayacak...'
                 )
                 # Override bitti → Nav2 costmap'teki engelle yeni yol bulur
+
+                # wait_dur saniye sonra taramayı yeniden etkinleştir
+                if self._rescan_timer is not None:
+                    self._rescan_timer.cancel()
+                self._rescan_timer = self.create_timer(
+                    self.wait_dur, self._reactivate_scanning
+                )
 
         elif self.blocking:
             # Engel kalktı
@@ -94,6 +107,16 @@ class ObstacleWaitNode(Node):
                 'Nav2 kaldığı yerden devam ediyor...'
             )
             # Override bitti → Nav2 mevcut plan üzerinden devam eder
+
+    # ------------------------------------------------------------------
+    def _reactivate_scanning(self):
+        """Tek seferlik timer callback'i: engel taramasını yeniden etkinleştirir."""
+        self.scanning_active = True
+        self._rescan_timer.cancel()
+        self._rescan_timer = None
+        self.get_logger().info(
+            f'{self.wait_dur:.0f}s bekleme sonrası engel algılama yeniden aktif.'
+        )
 
 
 # ----------------------------------------------------------------------
