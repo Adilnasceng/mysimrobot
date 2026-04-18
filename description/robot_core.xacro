@@ -156,4 +156,51 @@
         <mu2 value="0.001"/>
     </gazebo>
 
+    <!-- ============================================================
+         KARGO TAŞIMA ÇUBUKLARI
+         Robotun üst yüzeyinin 4 köşesinde dik kare kesitli çubuklar.
+         Amaç: gerçek robottaki köşe taşıma sistemini simüle etmek.
+
+         Nav2 / Haritalama notu:
+         Tüm çubuklar lidar merkezine olan yatay mesafe < 0.3 m
+         (min_range sınırı) olduğundan lidar tarafından görülmez;
+         haritaya ve costmap'e olumsuz etkisi yoktur.
+    ============================================================ -->
+    <xacro:property name="pole_size"   value="0.02"/>
+    <xacro:property name="pole_height" value="0.30"/>
+
+    <xacro:macro name="cargo_pole" params="prefix x y">
+        <joint name="${prefix}_pole_joint" type="fixed">
+            <parent link="chassis"/>
+            <child link="${prefix}_pole"/>
+            <!-- köşe konumu, z = şasi tepesi + çubuğun yarı boyu -->
+            <origin xyz="${x} ${y} ${chassis_height + pole_height/2}" rpy="0 0 0"/>
+        </joint>
+        <link name="${prefix}_pole">
+            <visual>
+                <geometry>
+                    <box size="${pole_size} ${pole_size} ${pole_height}"/>
+                </geometry>
+                <material name="red"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="${pole_size} ${pole_size} ${pole_height}"/>
+                </geometry>
+            </collision>
+            <xacro:inertial_box mass="0.05" x="${pole_size}" y="${pole_size}" z="${pole_height}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_box>
+        </link>
+        <gazebo reference="${prefix}_pole">
+            <material>Gazebo/Red</material>
+        </gazebo>
+    </xacro:macro>
+
+    <!-- 4 köşe: ön-sol, ön-sağ, arka-sol, arka-sağ -->
+    <xacro:cargo_pole prefix="front_left"  x="${chassis_length}"  y="${chassis_width/2}"/>
+    <xacro:cargo_pole prefix="front_right" x="${chassis_length}"  y="${-chassis_width/2}"/>
+    <xacro:cargo_pole prefix="back_left"   x="0.0"               y="${chassis_width/2}"/>
+    <xacro:cargo_pole prefix="back_right"  x="0.0"               y="${-chassis_width/2}"/>
+
 </robot>
