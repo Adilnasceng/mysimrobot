@@ -29,8 +29,20 @@
       <direction>-0.45 0.15 -0.88</direction>
     </light>
 
-    <light name="arena_overhead" type="point">
-      <pose>0 0 6 0 0 0</pose>
+    <!-- Two overhead lights to illuminate both zones evenly -->
+    <light name="overhead_warehouse" type="point">
+      <pose>-2.5 0 6 0 0 0</pose>
+      <diffuse>0.65 0.65 0.65 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+    </light>
+    <light name="overhead_production" type="point">
+      <pose>4.0 0 6 0 0 0</pose>
       <diffuse>0.65 0.65 0.65 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation>
@@ -77,268 +89,411 @@
     </model>
 
     <!--
-      Coordinate layout follows the 2026 Sanayide Robotik Uygulamalar schematic:
-      Start -> q1 -> D1, A1/A2/A3 on the upper-left side, controlled gate at q5,
-      D4 split to D5/D6 and B1/B2/B3 on the right side.
+      TEKNOFEST 2026 — Sanayide Robotik Uygulamalar Yarışma Alanı (12m × 8m)
+      Koordinat sistemi: X+ doğu, Y+ kuzey, Z+ yukarı (merkez orijin)
+
+      Duvarlar : Batı X=-6.075  Doğu X=+6.075  Güney Y=-4.075  Kuzey Y=+4.075
+      Bölme    : X=+1.5 (±0.075m kalınlık), kapı aralığı Y=-0.75 … +0.75
+
+      Düğümler : D1(-4.5,0)  D2(-2.5,0)  D3(-0.5,0)  D4(3,0)  D5(3,2)  D6(3,-2)
+      Alma     : A1(-4.5,3.3)  A2(-2.5,3.3)  A3(-0.5,3.3)
+      Bırakma  : B1(5.5,2)    B2(5.5,0)     B3(5.5,-2)
+      QR       : q1(-4.5,-1.5)  q2(-4.5,1.8)  q3(-2.5,1.8)  q4(-0.5,1.8)
+                 q5(0.7,0)  q6(2.2,0.6)  q7(4,-2)  q8(4,0)  q9(4,2)
     -->
     <model name="teknofest_arena_static">
       <static>true</static>
 
-      <!-- 12 m x 8 m competition floor. -->
+      <!-- ═══════════════════════════════════════════════════════════
+           ARENA ZEMİNİ (12m × 8m)
+           ═══════════════════════════════════════════════════════════ -->
       <link name="arena_floor">
         <pose>0 0 0.005 0 0 0</pose>
         <visual name="visual">
-          <geometry>
-            <box>
-              <size>12 8 0.01</size>
-            </box>
-          </geometry>
+          <geometry><box><size>12 8 0.01</size></box></geometry>
           <material>
-            <ambient>0.72 0.72 0.68 1</ambient>
-            <diffuse>0.72 0.72 0.68 1</diffuse>
+            <ambient>0.70 0.70 0.66 1</ambient>
+            <diffuse>0.70 0.70 0.66 1</diffuse>
           </material>
         </visual>
       </link>
 
-      <!-- Outer walls. -->
+      <!-- Sol zone (depo/warehouse): sıcak bej, X:-5.925→+1.425, center X=-2.25, W=7.35 -->
+      <link name="zone_warehouse">
+        <pose>-2.25 0 0.009 0 0 0</pose>
+        <visual name="visual">
+          <geometry><box><size>7.35 7.85 0.004</size></box></geometry>
+          <material>
+            <ambient>0.76 0.74 0.66 1</ambient>
+            <diffuse>0.76 0.74 0.66 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <!-- Sağ zone (üretim/production): serin gri-mavi, X:+1.575→+5.925, center X=3.75, W=4.35 -->
+      <link name="zone_production">
+        <pose>3.75 0 0.009 0 0 0</pose>
+        <visual name="visual">
+          <geometry><box><size>4.35 7.85 0.004</size></box></geometry>
+          <material>
+            <ambient>0.67 0.71 0.76 1</ambient>
+            <diffuse>0.67 0.71 0.76 1</diffuse>
+          </material>
+        </visual>
+      </link>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           DIŞ DUVARLAR
+           ═══════════════════════════════════════════════════════════ -->
       <link name="wall_north">
         <pose>0 4.075 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.48 0.48 0.48 1</ambient><diffuse>0.48 0.48 0.48 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
       </link>
       <link name="wall_south">
         <pose>0 -4.075 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.48 0.48 0.48 1</ambient><diffuse>0.48 0.48 0.48 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
       </link>
       <link name="wall_west">
         <pose>-6.075 0 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.48 0.48 0.48 1</ambient><diffuse>0.48 0.48 0.48 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
       </link>
       <link name="wall_east">
         <pose>6.075 0 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.48 0.48 0.48 1</ambient><diffuse>0.48 0.48 0.48 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
       </link>
 
-      <!-- Central partition with controlled door gap. -->
+      <!-- ═══════════════════════════════════════════════════════════
+           MERKEZ BÖLME DUVARI + KONTROLLÜ KAPI (1.5m aralık Y=±0.75)
+           Üst segment : Y=+0.75 → +4.075 → uzunluk 3.325m, merkez Y=+2.41
+           Alt segment : Y=-4.075 → -0.75  → uzunluk 3.325m, merkez Y=-2.41
+           ═══════════════════════════════════════════════════════════ -->
       <link name="partition_upper">
-        <pose>1.5 2.35 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.15 3.3 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.15 3.3 1</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+        <pose>1.5 2.41 0.5 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.15 3.325 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.15 3.325 1</size></box></geometry><material><ambient>0.82 0.82 0.82 1</ambient><diffuse>0.82 0.82 0.82 1</diffuse></material></visual>
       </link>
       <link name="partition_lower">
-        <pose>1.5 -2.35 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.15 3.3 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.15 3.3 1</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+        <pose>1.5 -2.41 0.5 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.15 3.325 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.15 3.325 1</size></box></geometry><material><ambient>0.82 0.82 0.82 1</ambient><diffuse>0.82 0.82 0.82 1</diffuse></material></visual>
       </link>
-      <link name="controlled_gate_header">
+
+      <!-- Kapı lento (üst kiriş, 1.5m aralığı kapatan görsel) -->
+      <link name="gate_header">
         <pose>1.5 0 1.05 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>1.8 0.14 0.1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>1.8 0.14 0.1</size></box></geometry><material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.15 1.5 0.1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.15 1.5 0.1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
       </link>
-      <link name="controlled_gate_left_post">
+
+      <!-- Kapı yan postları -->
+      <link name="gate_post_north">
         <pose>1.5 0.75 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.12 0.12 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.12 0.12 1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
       </link>
-      <link name="controlled_gate_right_post">
+      <link name="gate_post_south">
         <pose>1.5 -0.75 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.1 0.1 1</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.1 0.1 1</size></box></geometry><material><ambient>0.18 0.18 0.18 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.12 0.12 1</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.12 0.12 1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
       </link>
 
-      <!-- Door panel starts open, matching the "permission to pass" scenario visually. -->
-      <link name="controlled_gate_open_panel">
+      <!-- PLC durum ışığı (kırmızı = kapalı) -->
+      <link name="gate_plc_light">
+        <pose>1.5 0 1.22 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.10 0.10 0.10</size></box></geometry><material><ambient>0.95 0.05 0.05 1</ambient><diffuse>0.95 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- Kapı paneli (açık konumda, üst bölme yanına park edilmiş) -->
+      <link name="gate_door_panel">
         <pose>1.62 1.55 0.5 0 0 0</pose>
-        <collision name="collision"><geometry><box><size>0.05 1.35 0.95</size></box></geometry></collision>
-        <visual name="visual"><geometry><box><size>0.05 1.35 0.95</size></box></geometry><material><ambient>0.54 0.34 0.16 1</ambient><diffuse>0.54 0.34 0.16 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.05 1.4 0.95</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.05 1.4 0.95</size></box></geometry><material><ambient>0.55 0.35 0.15 1</ambient><diffuse>0.55 0.35 0.15 1</diffuse></material></visual>
       </link>
 
-      <!-- Wi-Fi and PLC blocks shown above the arena in the specification figure. -->
-      <link name="wifi_area_block">
-        <pose>-1.5 3.82 1.25 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>0.9 0.08 0.35</size></box></geometry><material><ambient>0.1 0.3 0.8 1</ambient><diffuse>0.1 0.3 0.8 1</diffuse></material></visual>
-      </link>
-      <link name="factory_automation_block">
-        <pose>0.25 3.82 1.25 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.0 0.08 0.35</size></box></geometry><material><ambient>0.9 0.25 0.1 1</ambient><diffuse>0.9 0.25 0.1 1</diffuse></material></visual>
-      </link>
-
-      <!-- Start/waiting area. -->
+      <!-- ═══════════════════════════════════════════════════════════
+           BAŞLANGIÇ ALANI (-4.5, -3.0)
+           ═══════════════════════════════════════════════════════════ -->
       <link name="start_area_outer">
         <pose>-4.5 -3.0 0.012 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.2 1.2 0.006</size></box></geometry><material><ambient>1.0 0.82 0.05 1</ambient><diffuse>1.0 0.82 0.05 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>1.2 1.2 0.006</size></box></geometry><material><ambient>1.0 0.82 0.05 1</ambient><diffuse>1.0 0.82 0.05 1</diffuse></material></visual>
       </link>
       <link name="start_area_inner">
         <pose>-4.5 -3.0 0.016 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>0.9 0.9 0.006</size></box></geometry><material><ambient>0.72 0.72 0.68 1</ambient><diffuse>0.72 0.72 0.68 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>0.85 0.85 0.006</size></box></geometry><material><ambient>0.76 0.74 0.66 1</ambient><diffuse>0.76 0.74 0.66 1</diffuse></material></visual>
       </link>
 
-      <!-- Main route graph, blue like the schematic dashed path. -->
+      <!-- ═══════════════════════════════════════════════════════════
+           ANA ROTA GRAFİĞİ — mavi çizgiler, Z merkezi 0.02
+           ═══════════════════════════════════════════════════════════ -->
+
+      <!-- Başlangıç(-4.5,-3.0) → D1(-4.5,0): dikey, L=3.0, merkez(-4.5,-1.5) -->
       <link name="route_start_to_d1">
         <pose>-4.5 -1.5 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
+
+      <!-- D1(-4.5,0) → D2(-2.5,0): yatay, L=2.0, merkez(-3.5,0) -->
       <link name="route_d1_d2">
         <pose>-3.5 0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
+
+      <!-- D2(-2.5,0) → D3(-0.5,0): yatay, L=2.0, merkez(-1.5,0) -->
       <link name="route_d2_d3">
         <pose>-1.5 0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
-      <link name="route_d3_q5">
-        <pose>0.25 0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+
+      <!-- D3(-0.5,0) → Kapı(X=1.5): yatay, L=2.0, merkez(0.5,0)  — boşluk kapatıldı -->
+      <link name="route_d3_to_gate">
+        <pose>0.5 0 0.02 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
+
+      <!-- Kapı(X=1.5) → D4(3.0,0): yatay, L=1.5, merkez(2.25,0)  — boşluk kapatıldı -->
       <link name="route_gate_to_d4">
-        <pose>2.4 0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.2 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <pose>2.25 0 0.02 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
-      <link name="route_d4_to_b2">
-        <pose>4.0 0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
+
+      <!-- D4(3,0) → D5(3,2): dikey, L=2.0, merkez(3,1) -->
       <link name="route_d4_to_d5">
         <pose>3.0 1.0 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
-      <link name="route_d5_to_b1">
-        <pose>4.0 2.0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
+
+      <!-- D4(3,0) → D6(3,-2): dikey, L=2.0, merkez(3,-1) -->
       <link name="route_d4_to_d6">
         <pose>3.0 -1.0 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
-      <link name="route_d6_to_b3">
-        <pose>4.0 -2.0 0.02 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
-      <link name="route_d1_to_a1">
-        <pose>-4.5 1.5 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
-      <link name="route_d2_to_a2">
-        <pose>-2.5 1.5 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
-      </link>
-      <link name="route_d3_to_a3">
-        <pose>-0.5 1.5 0.02 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
       </link>
 
-      <!-- 1.5 m final approach lines for camera-based line following. -->
+      <!-- D5(3,2) → B1(5.5,2): yatay, L=2.5, merkez(4.25,2)  — DÜZ YATAY -->
+      <link name="route_d5_to_b1">
+        <pose>4.25 2.0 0.02 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- D4(3,0) → B2(5.5,0): yatay, L=2.5, merkez(4.25,0)  — DÜZ YATAY -->
+      <link name="route_d4_to_b2">
+        <pose>4.25 0.0 0.02 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- D6(3,-2) → B3(5.5,-2): yatay, L=2.5, merkez(4.25,-2)  — DÜZ YATAY -->
+      <link name="route_d6_to_b3">
+        <pose>4.25 -2.0 0.02 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- D1(-4.5,0) → A1(-4.5,3.3): dikey, L=3.3, merkez(-4.5,1.65)  — uzatıldı -->
+      <link name="route_d1_to_a1">
+        <pose>-4.5 1.65 0.02 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- D2(-2.5,0) → A2(-2.5,3.3): dikey, L=3.3, merkez(-2.5,1.65)  — uzatıldı -->
+      <link name="route_d2_to_a2">
+        <pose>-2.5 1.65 0.02 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- D3(-0.5,0) → A3(-0.5,3.3): dikey, L=3.3, merkez(-0.5,1.65)  — uzatıldı -->
+      <link name="route_d3_to_a3">
+        <pose>-0.5 1.65 0.02 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      </link>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           ÇİZGİ TAKİBİ YAKLAŞIM ŞERİTLERİ — Z merkezi 0.03
+           A istasyonları: YEŞİL, dikey, 1.5m (Y=1.80 → 3.30, merkez Y=2.55)
+           B istasyonları: KIRMIZI, YATAY, 1.5m (X=4.00 → 5.50, merkez X=4.75)
+                           ROTASYON YOK — önceki yanlış açı düzeltildi
+           ═══════════════════════════════════════════════════════════ -->
       <link name="line_follow_a1_green">
-        <pose>-4.5 2.25 0.03 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>1.5 0.06 0.008</size></box></geometry><material><ambient>0.0 0.75 0.2 1</ambient><diffuse>0.0 0.75 0.2 1</diffuse></material></visual>
+        <pose>-4.5 2.55 0.03 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
       </link>
       <link name="line_follow_a2_green">
-        <pose>-2.5 2.25 0.03 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>1.5 0.06 0.008</size></box></geometry><material><ambient>0.0 0.75 0.2 1</ambient><diffuse>0.0 0.75 0.2 1</diffuse></material></visual>
+        <pose>-2.5 2.55 0.03 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
       </link>
       <link name="line_follow_a3_green">
-        <pose>-0.5 2.25 0.03 0 0 1.5708</pose>
-        <visual name="visual"><geometry><box><size>1.5 0.06 0.008</size></box></geometry><material><ambient>0.0 0.75 0.2 1</ambient><diffuse>0.0 0.75 0.2 1</diffuse></material></visual>
-      </link>
-      <link name="line_follow_b1_red">
-        <pose>4.25 1.75 0.03 0 0 0.32175</pose>
-        <visual name="visual"><geometry><box><size>1.58 0.06 0.008</size></box></geometry><material><ambient>0.9 0.05 0.05 1</ambient><diffuse>0.9 0.05 0.05 1</diffuse></material></visual>
-      </link>
-      <link name="line_follow_b2_red">
-        <pose>4.25 -0.25 0.03 0 0 0.32175</pose>
-        <visual name="visual"><geometry><box><size>1.58 0.06 0.008</size></box></geometry><material><ambient>0.9 0.05 0.05 1</ambient><diffuse>0.9 0.05 0.05 1</diffuse></material></visual>
-      </link>
-      <link name="line_follow_b3_red">
-        <pose>4.25 -1.75 0.03 0 0 -0.32175</pose>
-        <visual name="visual"><geometry><box><size>1.58 0.06 0.008</size></box></geometry><material><ambient>0.9 0.05 0.05 1</ambient><diffuse>0.9 0.05 0.05 1</diffuse></material></visual>
+        <pose>-0.5 2.55 0.03 0 0 1.5708</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
       </link>
 
-      <!-- Delivery zones B1, B2, B3. -->
+      <!-- B1: X=4.00→5.50, Y=2.0, rot=0 (DÜZ YATAY) -->
+      <link name="line_follow_b1_red">
+        <pose>4.75 2.0 0.03 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      </link>
+      <!-- B2: X=4.00→5.50, Y=0.0, rot=0 (DÜZ YATAY) -->
+      <link name="line_follow_b2_red">
+        <pose>4.75 0.0 0.03 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      </link>
+      <!-- B3: X=4.00→5.50, Y=-2.0, rot=0 (DÜZ YATAY) -->
+      <link name="line_follow_b3_red">
+        <pose>4.75 -2.0 0.03 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- ═══════════════════════════════════════════════════════════
+           BIRAKMA BÖLGELERİ B1, B2, B3 (X=5.5, doğu duvarına yakın)
+           ═══════════════════════════════════════════════════════════ -->
       <link name="B1_delivery_zone">
-        <pose>5.0 2.0 0.018 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.0 1.0 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+        <pose>5.5 2.0 0.018 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
       </link>
       <link name="B2_delivery_zone">
-        <pose>5.0 0.0 0.018 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.0 1.0 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+        <pose>5.5 0.0 0.018 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
       </link>
       <link name="B3_delivery_zone">
-        <pose>5.0 -2.0 0.018 0 0 0</pose>
-        <visual name="visual"><geometry><box><size>1.0 1.0 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+        <pose>5.5 -2.0 0.018 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
       </link>
 
-      <!-- Graph node squares D1-D6. -->
-      <link name="D1_node"><pose>-4.5 0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
-      <link name="D2_node"><pose>-2.5 0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
-      <link name="D3_node"><pose>-0.5 0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
-      <link name="D4_node"><pose>3.0 0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
-      <link name="D5_node"><pose>3.0 2.0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
-      <link name="D6_node"><pose>3.0 -2.0 0.04 0 0 0</pose><visual name="visual"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.9 1</ambient><diffuse>0.05 0.15 0.9 1</diffuse></material></visual></link>
+      <!-- ═══════════════════════════════════════════════════════════
+           DÜĞÜM NOKTALARI D1-D6 (mavi kareler)
+           ═══════════════════════════════════════════════════════════ -->
+      <link name="D1_node"><pose>-4.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name="D2_node"><pose>-2.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name="D3_node"><pose>-0.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name="D4_node"><pose> 3.0  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name="D5_node"><pose> 3.0  2.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name="D6_node"><pose> 3.0 -2.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
     </model>
 
-    <!-- Symbolic 5 kg pallet/load sets. Pallet size follows the specification figure: 0.7 x 0.6 x 0.11 m. -->
+    <!-- ═══════════════════════════════════════════════════════════════════
+         PALET + YÜK SETLERİ — A1, A2, A3 (Y=3.3, kuzey duvarına yakın)
+         Şartname ölçüleri: palet 0.7×0.6×0.11m, yük 0.5×0.42×0.36m, maks 5 kg
+         ═══════════════════════════════════════════════════════════════════ -->
     <model name="A1_pallet_and_load">
       <static>true</static>
-      <pose>-4.5 3.0 0 0 0 0</pose>
+      <pose>-4.5 3.3 0 0 0 0</pose>
       <link name="link">
-        <collision name="pallet_collision"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual name="pallet_visual"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.50 0.30 0.12 1</ambient><diffuse>0.50 0.30 0.12 1</diffuse></material></visual>
-        <collision name="load_collision"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual name="load_visual"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.25 0.25 0.28 1</ambient><diffuse>0.25 0.25 0.28 1</diffuse></material></visual>
+        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
+        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
+        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
+        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
       </link>
     </model>
     <model name="A2_pallet_and_load">
       <static>true</static>
-      <pose>-2.5 3.0 0 0 0 0</pose>
+      <pose>-2.5 3.3 0 0 0 0</pose>
       <link name="link">
-        <collision name="pallet_collision"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual name="pallet_visual"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.50 0.30 0.12 1</ambient><diffuse>0.50 0.30 0.12 1</diffuse></material></visual>
-        <collision name="load_collision"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual name="load_visual"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.25 0.25 0.28 1</ambient><diffuse>0.25 0.25 0.28 1</diffuse></material></visual>
+        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
+        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
+        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
+        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
       </link>
     </model>
     <model name="A3_pallet_and_load">
       <static>true</static>
-      <pose>-0.5 3.0 0 0 0 0</pose>
+      <pose>-0.5 3.3 0 0 0 0</pose>
       <link name="link">
-        <collision name="pallet_collision"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual name="pallet_visual"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.50 0.30 0.12 1</ambient><diffuse>0.50 0.30 0.12 1</diffuse></material></visual>
-        <collision name="load_collision"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual name="load_visual"><pose>0 0 0.29 0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.25 0.25 0.28 1</ambient><diffuse>0.25 0.25 0.28 1</diffuse></material></visual>
+        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
+        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
+        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
+        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
       </link>
     </model>
 
-    <!-- Shelf/backstop visuals behind A1-A3. -->
+    <!-- Arka duvar / backstop — A1, A2, A3 arkasında (Y=3.75) -->
     <model name="pickup_station_backstops">
       <static>true</static>
-      <link name="A1_backstop"><pose>-4.5 3.55 0.5 0 0 0</pose><collision name="collision"><geometry><box><size>1.1 0.1 1.0</size></box></geometry></collision><visual name="visual"><geometry><box><size>1.1 0.1 1.0</size></box></geometry><material><ambient>0.20 0.20 0.22 1</ambient><diffuse>0.20 0.20 0.22 1</diffuse></material></visual></link>
-      <link name="A2_backstop"><pose>-2.5 3.55 0.5 0 0 0</pose><collision name="collision"><geometry><box><size>1.1 0.1 1.0</size></box></geometry></collision><visual name="visual"><geometry><box><size>1.1 0.1 1.0</size></box></geometry><material><ambient>0.20 0.20 0.22 1</ambient><diffuse>0.20 0.20 0.22 1</diffuse></material></visual></link>
-      <link name="A3_backstop"><pose>-0.5 3.55 0.5 0 0 0</pose><collision name="collision"><geometry><box><size>1.1 0.1 1.0</size></box></geometry></collision><visual name="visual"><geometry><box><size>1.1 0.1 1.0</size></box></geometry><material><ambient>0.20 0.20 0.22 1</ambient><diffuse>0.20 0.20 0.22 1</diffuse></material></visual></link>
+      <link name="A1_bs"><pose>-4.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
+      <link name="A2_bs"><pose>-2.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
+      <link name="A3_bs"><pose>-0.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
     </model>
 
-    <!-- QR-like floor markers. Names and poses match q1-q9 in the specification figure. -->
-    <model name="qr_markers_q1_to_q9">
+    <!-- ═══════════════════════════════════════════════════════════════════
+         QR ZEMIN MARKERLERİ q1-q9  (beyaz tabanlı siyah desen, Z=0.04)
+         q1(-4.5,-1.5)  q2(-4.5,1.8)  q3(-2.5,1.8)  q4(-0.5,1.8)
+         q5(0.7,0)      q6(2.2,0.6)
+         q7(4.0,-2.0)   q8(4.0,0.0)   q9(4.0,2.0)   ← DÜZELTİLDİ
+         ═══════════════════════════════════════════════════════════════════ -->
+    <model name="qr_markers">
       <static>true</static>
-      <link name="q1_marker"><pose>-4.5 -1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q2_marker"><pose>-4.5 1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q3_marker"><pose>-2.5 1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q4_marker"><pose>-0.5 1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q5_marker"><pose>1.0 0.0 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q6_marker"><pose>2.2 0.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q7_marker"><pose>3.5 -1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q8_marker"><pose>3.5 -0.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
-      <link name="q9_marker"><pose>3.5 1.5 0.055 0 0 0</pose><visual name="base"><geometry><box><size>0.28 0.28 0.006</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual><visual name="code"><geometry><box><size>0.20 0.20 0.008</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual></link>
+
+      <!-- q1: ana rota, Başlangıç→D1 orta noktası -->
+      <link name="q1">
+        <pose>-4.5 -1.5 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q2: A1 yeşil şerit başlangıcı (Y=1.8) -->
+      <link name="q2">
+        <pose>-4.5 1.8 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q3: A2 yeşil şerit başlangıcı -->
+      <link name="q3">
+        <pose>-2.5 1.8 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q4: A3 yeşil şerit başlangıcı -->
+      <link name="q4">
+        <pose>-0.5 1.8 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q5: kapı durak noktası (kapıdan 0.8m önce, X=0.7) -->
+      <link name="q5">
+        <pose>0.7 0.0 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q6: kapı sonrası D5 dalı üzerinde -->
+      <link name="q6">
+        <pose>2.2 0.6 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q7: B3 kırmızı şerit başlangıcı  ← Y=-2.0 DÜZELTİLDİ (eski: Y=-1.5) -->
+      <link name="q7">
+        <pose>4.0 -2.0 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q8: B2 kırmızı şerit başlangıcı  ← Y=0.0  DÜZELTİLDİ (eski: Y=-0.5) -->
+      <link name="q8">
+        <pose>4.0 0.0 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
+
+      <!-- q9: B1 kırmızı şerit başlangıcı  ← Y=2.0  DÜZELTİLDİ (eski: Y=1.5) -->
+      <link name="q9">
+        <pose>4.0 2.0 0.04 0 0 0</pose>
+        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
+        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      </link>
     </model>
 
+    <!-- Kamera: tüm arena üstten görünür, hafif perspektif -->
     <gui fullscreen="0">
       <camera name="user_camera">
-        <pose>0 -8 10 0 0.9 1.5708</pose>
+        <pose>-1 -14 12 0 0.70 1.5708</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
     </gui>
+
   </world>
 </sdf>
