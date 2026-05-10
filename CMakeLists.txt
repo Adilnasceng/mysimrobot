@@ -31,6 +31,7 @@ install(
 
 install(PROGRAMS
   scripts/obstacle_wait_node.py
+  scripts/fork_teleop.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

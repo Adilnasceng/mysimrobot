@@ -1,23 +1,25 @@
-<?xml version="1.0"?>
-<sdf version="1.7">
-  <world name="teknofest_arena">
-    <gravity>0 0 -9.8</gravity>
+<sdf version='1.7'>
+  <world name='teknofest_arena'>
 
-    <physics name="default_physics" type="ode">
+    <!-- set_model_configuration servisi için gerekli -->
+    <plugin name="gazebo_ros_properties" filename="libgazebo_ros_properties.so">
+      <ros><namespace>/gazebo</namespace></ros>
+    </plugin>
+
+    <gravity>0 0 -9.8</gravity>
+    <physics name='default_physics' type='ode'>
       <max_step_size>0.001</max_step_size>
-      <real_time_factor>1.0</real_time_factor>
+      <real_time_factor>1</real_time_factor>
       <real_time_update_rate>1000</real_time_update_rate>
     </physics>
-
     <scene>
       <ambient>0.55 0.55 0.55 1</ambient>
-      <background>0.78 0.80 0.82 1</background>
-      <shadows>true</shadows>
+      <background>0.78 0.8 0.82 1</background>
+      <shadows>1</shadows>
     </scene>
-
-    <light name="sun" type="directional">
-      <cast_shadows>true</cast_shadows>
-      <pose>0 0 10 0 0 0</pose>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose>0 0 10 0 -0 0</pose>
       <diffuse>0.85 0.85 0.85 1</diffuse>
       <specular>0.2 0.2 0.2 1</specular>
       <attenuation>
@@ -27,11 +29,14 @@
         <quadratic>0.001</quadratic>
       </attenuation>
       <direction>-0.45 0.15 -0.88</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
     </light>
-
-    <!-- Two overhead lights to illuminate both zones evenly -->
-    <light name="overhead_warehouse" type="point">
-      <pose>-2.5 0 6 0 0 0</pose>
+    <light name='overhead_warehouse' type='point'>
+      <pose>-2.5 0 6 0 -0 0</pose>
       <diffuse>0.65 0.65 0.65 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation>
@@ -40,9 +45,15 @@
         <linear>0.01</linear>
         <quadratic>0.001</quadratic>
       </attenuation>
+      <direction>0 0 -1</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
     </light>
-    <light name="overhead_production" type="point">
-      <pose>4.0 0 6 0 0 0</pose>
+    <light name='overhead_production' type='point'>
+      <pose>4 0 6 0 -0 0</pose>
       <diffuse>0.65 0.65 0.65 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation>
@@ -51,12 +62,17 @@
         <linear>0.01</linear>
         <quadratic>0.001</quadratic>
       </attenuation>
+      <direction>0 0 -1</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
     </light>
-
-    <model name="ground_plane">
-      <static>true</static>
-      <link name="link">
-        <collision name="collision">
+    <model name='ground_plane'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
           <geometry>
             <plane>
               <normal>0 0 1</normal>
@@ -69,11 +85,19 @@
                 <mu>100</mu>
                 <mu2>100</mu2>
               </ode>
+              <torsional>
+                <ode/>
+              </torsional>
             </friction>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
           </surface>
+          <max_contacts>10</max_contacts>
         </collision>
-        <visual name="visual">
-          <cast_shadows>false</cast_shadows>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
           <geometry>
             <plane>
               <normal>0 0 1</normal>
@@ -85,415 +109,2071 @@
             <diffuse>0.58 0.58 0.58 1</diffuse>
           </material>
         </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
     </model>
-
-    <!--
-      TEKNOFEST 2026 — Sanayide Robotik Uygulamalar Yarışma Alanı (12m × 8m)
-      Koordinat sistemi: X+ doğu, Y+ kuzey, Z+ yukarı (merkez orijin)
-
-      Duvarlar : Batı X=-6.075  Doğu X=+6.075  Güney Y=-4.075  Kuzey Y=+4.075
-      Bölme    : X=+1.5 (±0.075m kalınlık), kapı aralığı Y=-0.75 … +0.75
-
-      Düğümler : D1(-4.5,0)  D2(-2.5,0)  D3(-0.5,0)  D4(3,0)  D5(3,2)  D6(3,-2)
-      Alma     : A1(-4.5,3.3)  A2(-2.5,3.3)  A3(-0.5,3.3)
-      Bırakma  : B1(5.5,2)    B2(5.5,0)     B3(5.5,-2)
-      QR       : q1(-4.5,-1.5)  q2(-4.5,1.8)  q3(-2.5,1.8)  q4(-0.5,1.8)
-                 q5(0.7,0)  q6(2.2,0.6)  q7(4,-2)  q8(4,0)  q9(4,2)
-    -->
-    <model name="teknofest_arena_static">
-      <static>true</static>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           ARENA ZEMİNİ (12m × 8m)
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="arena_floor">
-        <pose>0 0 0.005 0 0 0</pose>
-        <visual name="visual">
-          <geometry><box><size>12 8 0.01</size></box></geometry>
+    <model name='teknofest_arena_static'>
+      <static>1</static>
+      <link name='arena_floor'>
+        <pose>0 0 0.005 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>12 8 0.01</size>
+            </box>
+          </geometry>
           <material>
-            <ambient>0.70 0.70 0.66 1</ambient>
-            <diffuse>0.70 0.70 0.66 1</diffuse>
+            <ambient>0.7 0.7 0.66 1</ambient>
+            <diffuse>0.7 0.7 0.66 1</diffuse>
           </material>
         </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Sol zone (depo/warehouse): sıcak bej, X:-5.925→+1.425, center X=-2.25, W=7.35 -->
-      <link name="zone_warehouse">
-        <pose>-2.25 0 0.009 0 0 0</pose>
-        <visual name="visual">
-          <geometry><box><size>7.35 7.85 0.004</size></box></geometry>
+      <link name='zone_warehouse'>
+        <pose>-2.25 0 0.009 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>7.35 7.85 0.004</size>
+            </box>
+          </geometry>
           <material>
             <ambient>0.76 0.74 0.66 1</ambient>
             <diffuse>0.76 0.74 0.66 1</diffuse>
           </material>
         </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Sağ zone (üretim/production): serin gri-mavi, X:+1.575→+5.925, center X=3.75, W=4.35 -->
-      <link name="zone_production">
-        <pose>3.75 0 0.009 0 0 0</pose>
-        <visual name="visual">
-          <geometry><box><size>4.35 7.85 0.004</size></box></geometry>
+      <link name='zone_production'>
+        <pose>3.75 0 0.009 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <box>
+              <size>4.35 7.85 0.004</size>
+            </box>
+          </geometry>
           <material>
             <ambient>0.67 0.71 0.76 1</ambient>
             <diffuse>0.67 0.71 0.76 1</diffuse>
           </material>
         </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           DIŞ DUVARLAR
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="wall_north">
-        <pose>0 4.075 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
+      <link name='wall_north'>
+        <pose>0 4.075 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>12.15 0.15 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>12.15 0.15 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="wall_south">
-        <pose>0 -4.075 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>12.15 0.15 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>12.15 0.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
+      <link name='wall_south'>
+        <pose>0 -4.075 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>12.15 0.15 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>12.15 0.15 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="wall_west">
-        <pose>-6.075 0 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
+      <link name='wall_west'>
+        <pose>-6.075 0 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.15 8.15 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.15 8.15 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="wall_east">
-        <pose>6.075 0 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.15 8.15 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.15 8.15 1</size></box></geometry><material><ambient>0.45 0.45 0.45 1</ambient><diffuse>0.45 0.45 0.45 1</diffuse></material></visual>
+      <link name='wall_east'>
+        <pose>6.075 0 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.15 8.15 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.15 8.15 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.45 0.45 0.45 1</ambient>
+            <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           MERKEZ BÖLME DUVARI + KONTROLLÜ KAPI (1.5m aralık Y=±0.75)
-           Üst segment : Y=+0.75 → +4.075 → uzunluk 3.325m, merkez Y=+2.41
-           Alt segment : Y=-4.075 → -0.75  → uzunluk 3.325m, merkez Y=-2.41
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="partition_upper">
-        <pose>1.5 2.41 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.15 3.325 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.15 3.325 1</size></box></geometry><material><ambient>0.82 0.82 0.82 1</ambient><diffuse>0.82 0.82 0.82 1</diffuse></material></visual>
+      <link name='partition_upper'>
+        <pose>1.5 2.41 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.15 3.325 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.15 3.325 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="partition_lower">
-        <pose>1.5 -2.41 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.15 3.325 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.15 3.325 1</size></box></geometry><material><ambient>0.82 0.82 0.82 1</ambient><diffuse>0.82 0.82 0.82 1</diffuse></material></visual>
+      <link name='partition_lower'>
+        <pose>1.5 -2.41 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.15 3.325 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.15 3.325 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.82 0.82 0.82 1</ambient>
+            <diffuse>0.82 0.82 0.82 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Kapı lento (üst kiriş, 1.5m aralığı kapatan görsel) -->
-      <link name="gate_header">
-        <pose>1.5 0 1.05 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.15 1.5 0.1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.15 1.5 0.1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
+      <link name='gate_header'>
+        <pose>1.5 0 1.05 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.15 1.5 0.1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.15 1.5 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.2 0.2 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Kapı yan postları -->
-      <link name="gate_post_north">
-        <pose>1.5 0.75 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.12 0.12 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.12 0.12 1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
+      <link name='gate_post_north'>
+        <pose>1.5 0.75 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.12 0.12 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.12 0.12 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.2 0.2 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="gate_post_south">
-        <pose>1.5 -0.75 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.12 0.12 1</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.12 0.12 1</size></box></geometry><material><ambient>0.20 0.20 0.20 1</ambient><diffuse>0.20 0.20 0.20 1</diffuse></material></visual>
+      <link name='gate_post_south'>
+        <pose>1.5 -0.75 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.12 0.12 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.12 0.12 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.2 0.2 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- PLC durum ışığı (kırmızı = kapalı) -->
-      <link name="gate_plc_light">
-        <pose>1.5 0 1.22 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>0.10 0.10 0.10</size></box></geometry><material><ambient>0.95 0.05 0.05 1</ambient><diffuse>0.95 0.05 0.05 1</diffuse></material></visual>
+      <link name='gate_plc_light'>
+        <pose>1.5 0 1.22 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.05 0.05 1</ambient>
+            <diffuse>0.95 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Kapı paneli (açık konumda, üst bölme yanına park edilmiş) -->
-      <link name="gate_door_panel">
-        <pose>1.62 1.55 0.5 0 0 0</pose>
-        <collision name="col"><geometry><box><size>0.05 1.4 0.95</size></box></geometry></collision>
-        <visual name="vis"><geometry><box><size>0.05 1.4 0.95</size></box></geometry><material><ambient>0.55 0.35 0.15 1</ambient><diffuse>0.55 0.35 0.15 1</diffuse></material></visual>
+      <link name='gate_door_panel'>
+        <pose>1.62 1.55 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>0.05 1.4 0.95</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.05 1.4 0.95</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.55 0.35 0.15 1</ambient>
+            <diffuse>0.55 0.35 0.15 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           BAŞLANGIÇ ALANI (-4.5, -3.0)
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="start_area_outer">
-        <pose>-4.5 -3.0 0.012 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>1.2 1.2 0.006</size></box></geometry><material><ambient>1.0 0.82 0.05 1</ambient><diffuse>1.0 0.82 0.05 1</diffuse></material></visual>
+      <link name='start_area_outer'>
+        <pose>-4.5 -3 0.012 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.2 1.2 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 0.82 0.05 1</ambient>
+            <diffuse>1 0.82 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="start_area_inner">
-        <pose>-4.5 -3.0 0.016 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>0.85 0.85 0.006</size></box></geometry><material><ambient>0.76 0.74 0.66 1</ambient><diffuse>0.76 0.74 0.66 1</diffuse></material></visual>
+      <link name='start_area_inner'>
+        <pose>-4.5 -3 0.016 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.85 0.85 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.76 0.74 0.66 1</ambient>
+            <diffuse>0.76 0.74 0.66 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           ANA ROTA GRAFİĞİ — mavi çizgiler, Z merkezi 0.02
-           ═══════════════════════════════════════════════════════════ -->
-
-      <!-- Başlangıç(-4.5,-3.0) → D1(-4.5,0): dikey, L=3.0, merkez(-4.5,-1.5) -->
-      <link name="route_start_to_d1">
-        <pose>-4.5 -1.5 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>3.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_start_to_d1'>
+        <pose>-4.5 -1.5 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>3 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D1(-4.5,0) → D2(-2.5,0): yatay, L=2.0, merkez(-3.5,0) -->
-      <link name="route_d1_d2">
-        <pose>-3.5 0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d1_d2'>
+        <pose>-3.5 0 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D2(-2.5,0) → D3(-0.5,0): yatay, L=2.0, merkez(-1.5,0) -->
-      <link name="route_d2_d3">
-        <pose>-1.5 0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d2_d3'>
+        <pose>-1.5 0 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D3(-0.5,0) → Kapı(X=1.5): yatay, L=2.0, merkez(0.5,0)  — boşluk kapatıldı -->
-      <link name="route_d3_to_gate">
-        <pose>0.5 0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d3_to_gate'>
+        <pose>0.5 0 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- Kapı(X=1.5) → D4(3.0,0): yatay, L=1.5, merkez(2.25,0)  — boşluk kapatıldı -->
-      <link name="route_gate_to_d4">
-        <pose>2.25 0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_gate_to_d4'>
+        <pose>2.25 0 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D4(3,0) → D5(3,2): dikey, L=2.0, merkez(3,1) -->
-      <link name="route_d4_to_d5">
-        <pose>3.0 1.0 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d4_to_d5'>
+        <pose>3 1 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D4(3,0) → D6(3,-2): dikey, L=2.0, merkez(3,-1) -->
-      <link name="route_d4_to_d6">
-        <pose>3.0 -1.0 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>2.0 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d4_to_d6'>
+        <pose>3 -1 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D5(3,2) → B1(5.5,2): yatay, L=2.5, merkez(4.25,2)  — DÜZ YATAY -->
-      <link name="route_d5_to_b1">
-        <pose>4.25 2.0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d5_to_b1'>
+        <pose>4.25 2 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2.5 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D4(3,0) → B2(5.5,0): yatay, L=2.5, merkez(4.25,0)  — DÜZ YATAY -->
-      <link name="route_d4_to_b2">
-        <pose>4.25 0.0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d4_to_b2'>
+        <pose>4.25 0 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2.5 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D6(3,-2) → B3(5.5,-2): yatay, L=2.5, merkez(4.25,-2)  — DÜZ YATAY -->
-      <link name="route_d6_to_b3">
-        <pose>4.25 -2.0 0.02 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>2.5 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d6_to_b3'>
+        <pose>4.25 -2 0.02 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>2.5 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D1(-4.5,0) → A1(-4.5,3.3): dikey, L=3.3, merkez(-4.5,1.65)  — uzatıldı -->
-      <link name="route_d1_to_a1">
-        <pose>-4.5 1.65 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d1_to_a1'>
+        <pose>-4.5 1.65 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>3.3 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D2(-2.5,0) → A2(-2.5,3.3): dikey, L=3.3, merkez(-2.5,1.65)  — uzatıldı -->
-      <link name="route_d2_to_a2">
-        <pose>-2.5 1.65 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d2_to_a2'>
+        <pose>-2.5 1.65 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>3.3 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- D3(-0.5,0) → A3(-0.5,3.3): dikey, L=3.3, merkez(-0.5,1.65)  — uzatıldı -->
-      <link name="route_d3_to_a3">
-        <pose>-0.5 1.65 0.02 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>3.3 0.05 0.006</size></box></geometry><material><ambient>0.05 0.45 0.85 1</ambient><diffuse>0.05 0.45 0.85 1</diffuse></material></visual>
+      <link name='route_d3_to_a3'>
+        <pose>-0.5 1.65 0.02 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>3.3 0.05 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.45 0.85 1</ambient>
+            <diffuse>0.05 0.45 0.85 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           ÇİZGİ TAKİBİ YAKLAŞIM ŞERİTLERİ — Z merkezi 0.03
-           A istasyonları: YEŞİL, dikey, 1.5m (Y=1.80 → 3.30, merkez Y=2.55)
-           B istasyonları: KIRMIZI, YATAY, 1.5m (X=4.00 → 5.50, merkez X=4.75)
-                           ROTASYON YOK — önceki yanlış açı düzeltildi
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="line_follow_a1_green">
-        <pose>-4.5 2.55 0.03 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
+      <link name='line_follow_a1_green'>
+        <pose>-4.5 2.55 0.03 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.78 0.22 1</ambient>
+            <diffuse>0 0.78 0.22 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="line_follow_a2_green">
-        <pose>-2.5 2.55 0.03 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
+      <link name='line_follow_a2_green'>
+        <pose>-2.5 2.55 0.03 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.78 0.22 1</ambient>
+            <diffuse>0 0.78 0.22 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="line_follow_a3_green">
-        <pose>-0.5 2.55 0.03 0 0 1.5708</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.0 0.78 0.22 1</ambient><diffuse>0.0 0.78 0.22 1</diffuse></material></visual>
+      <link name='line_follow_a3_green'>
+        <pose>-0.5 2.55 0.03 0 -0 1.5708</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.78 0.22 1</ambient>
+            <diffuse>0 0.78 0.22 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- B1: X=4.00→5.50, Y=2.0, rot=0 (DÜZ YATAY) -->
-      <link name="line_follow_b1_red">
-        <pose>4.75 2.0 0.03 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      <link name='line_follow_b1_red'>
+        <pose>4.75 2 0.03 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.05 0.05 1</ambient>
+            <diffuse>0.9 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <!-- B2: X=4.00→5.50, Y=0.0, rot=0 (DÜZ YATAY) -->
-      <link name="line_follow_b2_red">
-        <pose>4.75 0.0 0.03 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      <link name='line_follow_b2_red'>
+        <pose>4.75 0 0.03 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.05 0.05 1</ambient>
+            <diffuse>0.9 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <!-- B3: X=4.00→5.50, Y=-2.0, rot=0 (DÜZ YATAY) -->
-      <link name="line_follow_b3_red">
-        <pose>4.75 -2.0 0.03 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>1.5 0.07 0.008</size></box></geometry><material><ambient>0.90 0.05 0.05 1</ambient><diffuse>0.90 0.05 0.05 1</diffuse></material></visual>
+      <link name='line_follow_b3_red'>
+        <pose>4.75 -2 0.03 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1.5 0.07 0.008</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.05 0.05 1</ambient>
+            <diffuse>0.9 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           BIRAKMA BÖLGELERİ B1, B2, B3 (X=5.5, doğu duvarına yakın)
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="B1_delivery_zone">
-        <pose>5.5 2.0 0.018 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+      <link name='B1_delivery_zone'>
+        <pose>5.5 2 0.018 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.9 0.9 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.12 0.12 1</ambient>
+            <diffuse>0.95 0.12 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="B2_delivery_zone">
-        <pose>5.5 0.0 0.018 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+      <link name='B2_delivery_zone'>
+        <pose>5.5 0 0.018 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.9 0.9 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.12 0.12 1</ambient>
+            <diffuse>0.95 0.12 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-      <link name="B3_delivery_zone">
-        <pose>5.5 -2.0 0.018 0 0 0</pose>
-        <visual name="vis"><geometry><box><size>0.90 0.90 0.006</size></box></geometry><material><ambient>0.95 0.12 0.12 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material></visual>
+      <link name='B3_delivery_zone'>
+        <pose>5.5 -2 0.018 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.9 0.9 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.12 0.12 1</ambient>
+            <diffuse>0.95 0.12 0.12 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- ═══════════════════════════════════════════════════════════
-           DÜĞÜM NOKTALARI D1-D6 (mavi kareler)
-           ═══════════════════════════════════════════════════════════ -->
-      <link name="D1_node"><pose>-4.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
-      <link name="D2_node"><pose>-2.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
-      <link name="D3_node"><pose>-0.5  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
-      <link name="D4_node"><pose> 3.0  0.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
-      <link name="D5_node"><pose> 3.0  2.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
-      <link name="D6_node"><pose> 3.0 -2.0 0.04 0 0 0</pose><visual name="vis"><geometry><box><size>0.18 0.18 0.02</size></box></geometry><material><ambient>0.05 0.15 0.90 1</ambient><diffuse>0.05 0.15 0.90 1</diffuse></material></visual></link>
+      <link name='D1_node'>
+        <pose>-4.5 0 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='D2_node'>
+        <pose>-2.5 0 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='D3_node'>
+        <pose>-0.5 0 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='D4_node'>
+        <pose>3 0 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='D5_node'>
+        <pose>3 2 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='D6_node'>
+        <pose>3 -2 0.04 0 -0 0</pose>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>0.18 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.15 0.9 1</ambient>
+            <diffuse>0.05 0.15 0.9 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
     </model>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         PALET + YÜK SETLERİ — A1, A2, A3 (Y=3.3, kuzey duvarına yakın)
-         Şartname ölçüleri: palet 0.7×0.6×0.11m, yük 0.5×0.42×0.36m, maks 5 kg
-         ═══════════════════════════════════════════════════════════════════ -->
-    <model name="A1_pallet_and_load">
-      <static>true</static>
-      <pose>-4.5 3.3 0 0 0 0</pose>
-      <link name="link">
-        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
-        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
+    <model name='A1_pallet_and_load'>
+      <static>1</static>
+      <pose>-4.5 3.3 0 0 -0 0</pose>
+      <link name='link'>
+        <collision name='pallet_col'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='pallet_vis'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.52 0.32 0.12 1</ambient>
+            <diffuse>0.52 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <collision name='load_col'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='load_vis'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.28 0.28 0.3 1</ambient>
+            <diffuse>0.28 0.28 0.3 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
     </model>
-    <model name="A2_pallet_and_load">
-      <static>true</static>
-      <pose>-2.5 3.3 0 0 0 0</pose>
-      <link name="link">
-        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
-        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
+    <model name='A2_pallet_and_load'>
+      <static>1</static>
+      <pose>-2.5 3.3 0 0 -0 0</pose>
+      <link name='link'>
+        <collision name='pallet_col'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='pallet_vis'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.52 0.32 0.12 1</ambient>
+            <diffuse>0.52 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <collision name='load_col'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='load_vis'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.28 0.28 0.3 1</ambient>
+            <diffuse>0.28 0.28 0.3 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
     </model>
-    <model name="A3_pallet_and_load">
-      <static>true</static>
-      <pose>-0.5 3.3 0 0 0 0</pose>
-      <link name="link">
-        <collision name="pallet_col"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry></collision>
-        <visual   name="pallet_vis"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.7 0.6 0.11</size></box></geometry><material><ambient>0.52 0.32 0.12 1</ambient><diffuse>0.52 0.32 0.12 1</diffuse></material></visual>
-        <collision name="load_col"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry></collision>
-        <visual   name="load_vis"  ><pose>0 0 0.29  0 0 0</pose><geometry><box><size>0.5 0.42 0.36</size></box></geometry><material><ambient>0.28 0.28 0.30 1</ambient><diffuse>0.28 0.28 0.30 1</diffuse></material></visual>
+    <model name='A3_pallet_and_load'>
+      <static>1</static>
+      <pose>-0.5 3.3 0 0 -0 0</pose>
+      <link name='link'>
+        <collision name='pallet_col'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='pallet_vis'>
+          <pose>0 0 0.055 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.6 0.11</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.52 0.32 0.12 1</ambient>
+            <diffuse>0.52 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+        <collision name='load_col'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='load_vis'>
+          <pose>0 0 0.29 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.42 0.36</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.28 0.28 0.3 1</ambient>
+            <diffuse>0.28 0.28 0.3 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
     </model>
-
-    <!-- Arka duvar / backstop — A1, A2, A3 arkasında (Y=3.75) -->
-    <model name="pickup_station_backstops">
-      <static>true</static>
-      <link name="A1_bs"><pose>-4.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
-      <link name="A2_bs"><pose>-2.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
-      <link name="A3_bs"><pose>-0.5 3.75 0.5 0 0 0</pose><collision name="col"><geometry><box><size>1.0 0.10 1.0</size></box></geometry></collision><visual name="vis"><geometry><box><size>1.0 0.10 1.0</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.22 0.22 0.24 1</diffuse></material></visual></link>
+    <model name='pickup_station_backstops'>
+      <static>1</static>
+      <link name='A1_bs'>
+        <pose>-4.5 3.75 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.22 0.22 0.24 1</ambient>
+            <diffuse>0.22 0.22 0.24 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='A2_bs'>
+        <pose>-2.5 3.75 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.22 0.22 0.24 1</ambient>
+            <diffuse>0.22 0.22 0.24 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='A3_bs'>
+        <pose>-0.5 3.75 0.5 0 -0 0</pose>
+        <collision name='col'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='vis'>
+          <geometry>
+            <box>
+              <size>1 0.1 1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.22 0.22 0.24 1</ambient>
+            <diffuse>0.22 0.22 0.24 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
     </model>
-
-    <!-- ═══════════════════════════════════════════════════════════════════
-         QR ZEMIN MARKERLERİ q1-q9  (beyaz tabanlı siyah desen, Z=0.04)
-         q1(-4.5,-1.5)  q2(-4.5,1.8)  q3(-2.5,1.8)  q4(-0.5,1.8)
-         q5(0.7,0)      q6(2.2,0.6)
-         q7(4.0,-2.0)   q8(4.0,0.0)   q9(4.0,2.0)   ← DÜZELTİLDİ
-         ═══════════════════════════════════════════════════════════════════ -->
-    <model name="qr_markers">
-      <static>true</static>
-
-      <!-- q1: ana rota, Başlangıç→D1 orta noktası -->
-      <link name="q1">
-        <pose>-4.5 -1.5 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+    <model name='qr_markers'>
+      <static>1</static>
+      <link name='q1'>
+        <pose>-4.5 -1.5 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q2: A1 yeşil şerit başlangıcı (Y=1.8) -->
-      <link name="q2">
-        <pose>-4.5 1.8 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q2'>
+        <pose>-4.5 1.8 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q3: A2 yeşil şerit başlangıcı -->
-      <link name="q3">
-        <pose>-2.5 1.8 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q3'>
+        <pose>-2.5 1.8 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q4: A3 yeşil şerit başlangıcı -->
-      <link name="q4">
-        <pose>-0.5 1.8 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q4'>
+        <pose>-0.5 1.8 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q5: kapı durak noktası (kapıdan 0.8m önce, X=0.7) -->
-      <link name="q5">
-        <pose>0.7 0.0 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q5'>
+        <pose>0.7 0 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q6: D4→D5 dikey dal üzerinde (X=3.0, Y=0.6) — rota üzerinde -->
-      <link name="q6">
-        <pose>3.0 0.6 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q6'>
+        <pose>3 0.6 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q7: B3 kırmızı şerit başlangıcı  ← Y=-2.0 DÜZELTİLDİ (eski: Y=-1.5) -->
-      <link name="q7">
-        <pose>4.0 -2.0 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q7'>
+        <pose>4 -2 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q8: B2 kırmızı şerit başlangıcı  ← Y=0.0  DÜZELTİLDİ (eski: Y=-0.5) -->
-      <link name="q8">
-        <pose>4.0 0.0 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q8'>
+        <pose>4 0 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
-
-      <!-- q9: B1 kırmızı şerit başlangıcı  ← Y=2.0  DÜZELTİLDİ (eski: Y=1.5) -->
-      <link name="q9">
-        <pose>4.0 2.0 0.04 0 0 0</pose>
-        <visual name="base"><geometry><box><size>0.28 0.28 0.005</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse></material></visual>
-        <visual name="pat" ><pose>0 0 0.004 0 0 0</pose><geometry><box><size>0.20 0.20 0.004</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual>
+      <link name='q9'>
+        <pose>4 2 0.04 0 -0 0</pose>
+        <visual name='base'>
+          <geometry>
+            <box>
+              <size>0.28 0.28 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+          </material>
+        </visual>
+        <visual name='pat'>
+          <pose>0 0 0.004 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.2 0.004</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
       </link>
     </model>
-
-    <!-- Kamera: tüm arena üstten görünür, hafif perspektif -->
-    <gui fullscreen="0">
-      <camera name="user_camera">
-        <pose>-1 -14 12 0 0.70 1.5708</pose>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>2.55606 -9.84898 12.7683 0 0.843224 1.63319</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
     </gui>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
 
+    <!--
+      TEST PALETİ – forklift geliştirme için kaldırılabilir palet
+      Konum: (2.0, 0) – üretim bölgesi önü
+      Geometri: 4 köşe ayak (8 cm yüksek) + üst tabla → çatal girebilir
+      Çatal kalınlığı 4 cm, açıklık 8 cm → 4 cm boşluk  ✓
+    -->
+    <model name='test_pallet'>
+      <static>false</static>
+      <pose>2.0 0 0 0 0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>12.0</mass>
+          <inertia>
+            <ixx>0.37</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>0.54</iyy><iyz>0</iyz>
+            <izz>0.85</izz>
+          </inertia>
+        </inertial>
+
+        <!-- Üst tabla: 70×60×4 cm, z=0.08..0.12 -->
+        <collision name='platform_col'>
+          <pose>0 0 0.10 0 0 0</pose>
+          <geometry><box><size>0.70 0.60 0.04</size></box></geometry>
+          <surface>
+            <friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction>
+            <contact><ode/></contact>
+          </surface>
+        </collision>
+        <visual name='platform_vis'>
+          <pose>0 0 0.10 0 0 0</pose>
+          <geometry><box><size>0.70 0.60 0.04</size></box></geometry>
+          <material>
+            <ambient>0.52 0.32 0.12 1</ambient>
+            <diffuse>0.52 0.32 0.12 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- Ön-sol ayak -->
+        <collision name='leg_fl_col'>
+          <pose> 0.28  0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+        </collision>
+        <visual name='leg_fl_vis'>
+          <pose> 0.28  0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+          <material><ambient>0.45 0.28 0.10 1</ambient><diffuse>0.45 0.28 0.10 1</diffuse></material>
+        </visual>
+
+        <!-- Ön-sağ ayak -->
+        <collision name='leg_fr_col'>
+          <pose> 0.28 -0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+        </collision>
+        <visual name='leg_fr_vis'>
+          <pose> 0.28 -0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+          <material><ambient>0.45 0.28 0.10 1</ambient><diffuse>0.45 0.28 0.10 1</diffuse></material>
+        </visual>
+
+        <!-- Arka-sol ayak -->
+        <collision name='leg_bl_col'>
+          <pose>-0.28  0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+        </collision>
+        <visual name='leg_bl_vis'>
+          <pose>-0.28  0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+          <material><ambient>0.45 0.28 0.10 1</ambient><diffuse>0.45 0.28 0.10 1</diffuse></material>
+        </visual>
+
+        <!-- Arka-sağ ayak -->
+        <collision name='leg_br_col'>
+          <pose>-0.28 -0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+        </collision>
+        <visual name='leg_br_vis'>
+          <pose>-0.28 -0.23 0.04 0 0 0</pose>
+          <geometry><box><size>0.08 0.08 0.08</size></box></geometry>
+          <material><ambient>0.45 0.28 0.10 1</ambient><diffuse>0.45 0.28 0.10 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <state world_name='teknofest_arena'>
+      <sim_time>320 356000000</sim_time>
+      <real_time>321 634174235</real_time>
+      <wall_time>1778364248 861325790</wall_time>
+      <iterations>320356</iterations>
+      <model name='A1_pallet_and_load'>
+        <pose>-4.5 3.3 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-4.5 3.3 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='A2_pallet_and_load'>
+        <pose>-2.5 3.3 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-2.5 3.3 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='A3_pallet_and_load'>
+        <pose>-0.5 3.3 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>-0.5 3.3 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='ground_plane'>
+        <pose>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose>0 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='pickup_station_backstops'>
+        <pose>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='A1_bs'>
+          <pose>-4.5 3.75 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='A2_bs'>
+          <pose>-2.5 3.75 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='A3_bs'>
+          <pose>-0.5 3.75 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='qr_markers'>
+        <pose>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='q1'>
+          <pose>-4.5 -1.5 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q2'>
+          <pose>-4.5 1.8 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q3'>
+          <pose>-2.5 1.8 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q4'>
+          <pose>-0.5 1.8 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q5'>
+          <pose>0.7 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q6'>
+          <pose>2.2 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q7'>
+          <pose>4 -2 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q8'>
+          <pose>4 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='q9'>
+          <pose>4 2 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='teknofest_arena_static'>
+        <pose>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='B1_delivery_zone'>
+          <pose>5.5 2 0.018 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='B2_delivery_zone'>
+          <pose>5.5 0 0.018 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='B3_delivery_zone'>
+          <pose>5.5 -2 0.018 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D1_node'>
+          <pose>-4.5 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D2_node'>
+          <pose>-2.5 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D3_node'>
+          <pose>-0.5 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D4_node'>
+          <pose>3 0 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D5_node'>
+          <pose>3 2 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='D6_node'>
+          <pose>3 -2 0.04 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='arena_floor'>
+          <pose>0 0 0.005 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='gate_door_panel'>
+          <pose>1.62 1.55 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='gate_header'>
+          <pose>1.5 0 1.05 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='gate_plc_light'>
+          <pose>1.5 0 1.22 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='gate_post_north'>
+          <pose>1.5 0.75 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='gate_post_south'>
+          <pose>1.5 -0.75 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_a1_green'>
+          <pose>-4.5 2.55 0.03 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_a2_green'>
+          <pose>-2.5 2.55 0.03 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_a3_green'>
+          <pose>-0.5 2.55 0.03 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_b1_red'>
+          <pose>4.75 2 0.03 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_b2_red'>
+          <pose>4.75 0 0.03 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='line_follow_b3_red'>
+          <pose>4.75 -2 0.03 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='partition_lower'>
+          <pose>1.5 -2.41 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='partition_upper'>
+          <pose>1.5 2.41 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d1_d2'>
+          <pose>-3.5 0 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d1_to_a1'>
+          <pose>-4.5 1.65 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d2_d3'>
+          <pose>-1.5 0 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d2_to_a2'>
+          <pose>-2.5 1.65 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d3_to_a3'>
+          <pose>-0.5 1.65 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d3_to_gate'>
+          <pose>0.5 0 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d4_to_b2'>
+          <pose>4.25 0 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d4_to_d5'>
+          <pose>3 1 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d4_to_d6'>
+          <pose>3 -1 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d5_to_b1'>
+          <pose>4.25 2 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_d6_to_b3'>
+          <pose>4.25 -2 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_gate_to_d4'>
+          <pose>2.25 0 0.02 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='route_start_to_d1'>
+          <pose>-4.5 -1.5 0.02 0 -0 1.5708</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='start_area_inner'>
+          <pose>-4.5 -3 0.016 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='start_area_outer'>
+          <pose>-4.5 -3 0.012 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='wall_east'>
+          <pose>6.075 0 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='wall_north'>
+          <pose>0 4.075 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='wall_south'>
+          <pose>0 -4.075 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='wall_west'>
+          <pose>-6.075 0 0.5 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='zone_production'>
+          <pose>3.75 0 0.009 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+        <link name='zone_warehouse'>
+          <pose>-2.25 0 0.009 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='overhead_production'>
+        <pose>4 0 6 0 -0 0</pose>
+      </light>
+      <light name='overhead_warehouse'>
+        <pose>-2.5 0 6 0 -0 0</pose>
+      </light>
+      <light name='sun'>
+        <pose>0 0 10 0 -0 0</pose>
+      </light>
+    </state>
   </world>
 </sdf>

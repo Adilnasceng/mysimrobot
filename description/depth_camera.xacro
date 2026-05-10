@@ -1,39 +1,52 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <!-- ============================================================
+         Derinlik + RGB Kamera
+         Mast ön yüzüne monte, çizgi takibi ve QR kod okuma için
+         Hafif öne-aşağı bakan (≈25°) → zemin QR kodları 0.4–1.5 m mesafede
+         base_link'e göre: x ≈ 0.10 m,  z ≈ 0.27 m
+    ============================================================ -->
     <joint name="camera_joint" type="fixed">
-        <parent link="chassis"/>
-        <child link="camera_link"/>
-        <origin xyz="0.305 0 0.08" rpy="0 0 0"/>
+        <parent link="mast"/>
+        <child  link="camera_link"/>
+        <!-- mast ön yüzünde, orta yükseklikte, hafif aşağı bakan -->
+        <origin xyz="${0.08/2 + 0.012} 0 0.0" rpy="0 0.44 0"/>
     </joint>
 
     <link name="camera_link">
         <visual>
             <geometry>
-                <box size="0.010 0.03 0.03"/>
+                <box size="0.020 0.060 0.025"/>
             </geometry>
-            <material name="red"/>
+            <material name="dark_gray"/>
         </visual>
+        <collision>
+            <geometry>
+                <box size="0.020 0.060 0.025"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.08"/>
+            <inertia ixx="0.00001" ixy="0" ixz="0"
+                     iyy="0.00001" iyz="0" izz="0.00001"/>
+        </inertial>
     </link>
 
-
+    <!-- Optik frame: kameranın görüntü ekseni +Z, sağ +X (ROS konvansiyonu) -->
     <joint name="camera_optical_joint" type="fixed">
         <parent link="camera_link"/>
-        <child link="camera_link_optical"/>
+        <child  link="camera_link_optical"/>
         <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
     </joint>
-
-    <link name="camera_link_optical"></link>
-
-
+    <link name="camera_link_optical"/>
 
     <gazebo reference="camera_link">
-        <material>Gazebo/Red</material>
-
+        <material>Gazebo/DarkGray</material>
         <sensor name="camera" type="depth">
-            <pose> 0 0 0 0 0 0 </pose>
-            <visualize>true</visualize>
-            <update_rate>10</update_rate>
+            <pose>0 0 0 0 0 0</pose>
+            <visualize>false</visualize>
+            <update_rate>15</update_rate>
             <camera>
                 <horizontal_fov>1.089</horizontal_fov>
                 <image>
@@ -43,13 +56,18 @@
                 </image>
                 <clip>
                     <near>0.05</near>
-                    <far>8.0</far>
+                    <far>5.0</far>
                 </clip>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.005</stddev>
+                </noise>
             </camera>
             <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
                 <frame_name>camera_link_optical</frame_name>
-                <min_depth>0.1</min_depth>
-                <max_depth>100.0</max_depth>
+                <min_depth>0.05</min_depth>
+                <max_depth>5.0</max_depth>
             </plugin>
         </sensor>
     </gazebo>

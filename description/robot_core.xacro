@@ -1,84 +1,231 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
     <xacro:include filename="inertial_macros.xacro"/>
 
-    <xacro:property name="chassis_length" value="0.335"/>
-    <xacro:property name="chassis_width" value="0.265"/>
-    <xacro:property name="chassis_height" value="0.138"/>
-    <xacro:property name="chassis_mass" value="1.0"/>
-    <xacro:property name="wheel_radius" value="0.033"/>
-    <xacro:property name="wheel_thickness" value="0.026"/>
-    <xacro:property name="wheel_mass" value="0.05"/>
-    <xacro:property name="wheel_offset_x" value="0.226"/>
-    <xacro:property name="wheel_offset_y" value="0.1485"/>
-    <xacro:property name="wheel_offset_z" value="0.01"/>
-    <xacro:property name="caster_wheel_radius" value="0.025"/>  <!-- 0.01 → 0.025 -->
-    <xacro:property name="caster_wheel_mass" value="0.01"/>
-    <xacro:property name="caster_wheel_offset_x" value="0.075"/>
-    <!-- Şasi tabanına tam oturması için otomatik hesap: -->
-    <xacro:property name="caster_wheel_offset_z" value="${wheel_offset_z - wheel_radius + caster_wheel_radius}"/>
+    <!-- ============================================================
+         TEKNOFEST 2026 – Forklift Otonom Mobil Robot
+         Maksimum boyutlar: 700 mm genişlik × 1000 mm uzunluk × 600 mm yükseklik
+         Fork uzunluğu: 650 mm (spec maks)
 
-    <material name="white">
-        <color rgba="1 1 1 1" />
-    </material>
-    <material name="orange">
-        <color rgba="1 0.3 0.1 1"/>
-    </material>
-    <material name="blue">
-        <color rgba="0.2 0.2 1 1"/>
-    </material>
-    <material name="black">
-        <color rgba="0 0 0 1"/>
-    </material>
-    <material name="red">
-        <color rgba="1 0 0 1"/>
-    </material>
+         Koordinat sistemi:
+           base_link → zemin, arka tekerlek aksının merkezi
+           +X → ileri (fork yönü)
+           +Y → sol
+           +Z → yukarı
 
-    <!-- BASE LINK -->
-    <link name="base_link"></link>
+         Gerçek boyutlar:
+           Arka gövde:  250 mm (x) × 640 mm (y) × 540 mm (z)
+           Mast:         80 mm (x) × 120 mm (y) × 540 mm (z)
+           Fork toplam: 980 mm → gövde(250) + mast(80) + fork(650) ≈ 980 mm  ✓
+           Toplam genişlik: 640 mm  ✓
+           Toplam yükseklik: ~580 mm (sensörler dahil)  ✓
+    ============================================================ -->
 
-    <!-- BASE_FOOTPRINT LINK -->
+    <!-- ── Arka gövde (counterweight) ── -->
+    <xacro:property name="body_length" value="0.55"/>
+    <xacro:property name="body_width"  value="0.66"/>
+    <xacro:property name="body_height" value="0.34"/>
+    <xacro:property name="body_mass"   value="15.0"/>
+
+    <!-- ── Mast (dikey taşıma direği) ── -->
+    <xacro:property name="mast_depth"  value="0.08"/>
+    <xacro:property name="mast_width"  value="0.12"/>
+    <xacro:property name="mast_height" value="0.44"/>
+    <xacro:property name="mast_mass"   value="2.0"/>
+
+    <!-- ── Fork taşıyıcı (carriage, mast üzerinde kayar) ── -->
+    <xacro:property name="carriage_depth"  value="0.08"/>
+    <xacro:property name="carriage_width"  value="0.48"/>
+    <xacro:property name="carriage_height" value="0.05"/>
+    <xacro:property name="carriage_mass"   value="1.5"/>
+
+    <!-- ── Fork tine'ları (iki adet yatay maşa) ── -->
+    <xacro:property name="fork_length"   value="0.65"/>
+    <xacro:property name="fork_width"    value="0.07"/>
+    <xacro:property name="fork_height"   value="0.04"/>
+    <xacro:property name="fork_y_offset" value="0.12"/>
+    <xacro:property name="fork_mass"     value="0.8"/>
+
+    <!-- ── Arka sürüş tekerlekleri ── -->
+    <xacro:property name="wheel_radius"    value="0.065"/>
+    <xacro:property name="wheel_thickness" value="0.065"/>
+    <xacro:property name="wheel_mass"      value="1.5"/>
+    <xacro:property name="wheel_y_offset"  value="0.28"/>
+
+    <!-- ── Ön yük tekerlekleri (fork altında, döner) ── -->
+    <xacro:property name="caster_radius"    value="0.04"/>
+    <xacro:property name="caster_mass"      value="0.3"/>
+    <xacro:property name="caster_x_fwd"     value="0.65"/>
+    <xacro:property name="caster_y_offset"  value="0.12"/>
+
+    <!--
+        Ağırlık merkezi ofseti:
+        Gövde tamamı arka tekerleklerin gerisinde olursa CoM < 0 → robot geriye devriliyor.
+        chassis_x_offset ile gövdeyi 7 cm öne taşıyoruz:
+          CoM ≈ +0.02 m  (ön-arka tekerlekler arası)  → STABİL
+    -->
+    <xacro:property name="chassis_x_offset" value="-0.15"/>
+
+    <!-- Renkler -->
+    <material name="forklift_yellow"><color rgba="0.95 0.80 0.05 1"/></material>
+    <material name="dark_gray">      <color rgba="0.25 0.25 0.25 1"/></material>
+    <material name="black">          <color rgba="0.05 0.05 0.05 1"/></material>
+    <material name="white">          <color rgba="0.92 0.92 0.92 1"/></material>
+    <material name="red">            <color rgba="0.85 0.10 0.10 1"/></material>
+    <material name="blue">           <color rgba="0.15 0.25 0.85 1"/></material>
+
+    <!-- ================================================================
+         BASE LINK  –  zemin, arka tekerlek aksı merkezi
+    ================================================================ -->
+    <link name="base_link"/>
+
     <joint name="base_footprint_joint" type="fixed">
         <parent link="base_link"/>
-        <child link="base_footprint"/>
+        <child  link="base_footprint"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
-    <link name="base_footprint"></link>
+    <link name="base_footprint"/>
 
-    <!-- CHASSIS LINK -->
+    <!-- ================================================================
+         CHASSIS – arka gövde / karşı ağırlık
+         base_link'e göre: x ∈ [−0.25, 0],  z ∈ [0, 0.54]
+    ================================================================ -->
     <joint name="chassis_joint" type="fixed">
         <parent link="base_link"/>
-        <child link="chassis"/>
-        <origin xyz="${-wheel_offset_x} 0 ${-wheel_offset_z}"/>
+        <child  link="chassis"/>
+        <!-- x: gövde arka tekerlek aksına göre hafif öne kayık → CoM ±0 seviyesinde tutulur
+             z: wheel_radius + body_height/2 → gövde alt yüzü zemin üstünde (tekerlek üstünde) -->
+        <origin xyz="${chassis_x_offset} 0 ${wheel_radius + body_height/2}" rpy="0 0 0"/>
     </joint>
     <link name="chassis">
         <visual>
-            <origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/>
             <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+                <box size="${body_length} ${body_width} ${body_height}"/>
             </geometry>
-            <material name="orange"/>
+            <material name="forklift_yellow"/>
         </visual>
         <collision>
-            <origin xyz="${chassis_length/2} 0 ${chassis_height/2}"/>
             <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+                <box size="${body_length} ${body_width} ${body_height}"/>
             </geometry>
         </collision>
-        <xacro:inertial_box mass="0.5" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
-            <origin xyz="${chassis_length/2} 0 ${chassis_height/2}" rpy="0 0 0"/>
+        <xacro:inertial_box mass="${body_mass}"
+                            x="${body_length}" y="${body_width}" z="${body_height}">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_box>
     </link>
-    <gazebo reference="chassis">
-        <material>Gazebo/Orange</material>
-    </gazebo>
+    <gazebo reference="chassis"><material>Gazebo/Yellow</material></gazebo>
 
-    <!-- LEFT WHEEL LINK -->
+    <!-- ================================================================
+         MAST – dikey taşıma direği, gövde ön yüzüne bağlı
+         chassis frame'de: x = body_length/2 + mast_depth/2
+         base_link'e göre mast merkezi ≈ (0.04, 0, 0.27)
+    ================================================================ -->
+    <joint name="mast_joint" type="fixed">
+        <parent link="chassis"/>
+        <child  link="mast"/>
+        <origin xyz="${body_length/2 + mast_depth/2} 0 ${mast_height/2 - body_height/2}"
+                rpy="0 0 0"/>
+    </joint>
+    <link name="mast">
+        <visual>
+            <geometry>
+                <box size="${mast_depth} ${mast_width} ${mast_height}"/>
+            </geometry>
+            <material name="dark_gray"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${mast_depth} ${mast_width} ${mast_height}"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="${mast_mass}"
+                            x="${mast_depth}" y="${mast_width}" z="${mast_height}">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+    <gazebo reference="mast"><material>Gazebo/DarkGray</material></gazebo>
+
+    <!-- ================================================================
+         FORK CARRIAGE – mast üzerinde kayar (prismatic joint)
+         Kaldırma menzili: 0 – 30 cm
+         Başlangıç: zemin seviyesinin hemen üstü (~4.5 cm)
+    ================================================================ -->
+    <joint name="fork_carriage_joint" type="prismatic">
+        <parent link="mast"/>
+        <child  link="fork_carriage"/>
+        <origin xyz="${mast_depth/2 + carriage_depth/2}
+                     0
+                     ${-mast_height/2 + carriage_height/2 + 0.005}"
+                rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="0.0" upper="0.30" effort="500" velocity="0.3"/>
+        <!-- friction=0 (Gazebo ODE friction güvenilmez); kontrolcü gravity compensation yapar -->
+        <dynamics damping="200.0" friction="0.0"/>
+    </joint>
+    <link name="fork_carriage">
+        <visual>
+            <geometry>
+                <box size="${carriage_depth} ${carriage_width} ${carriage_height}"/>
+            </geometry>
+            <material name="dark_gray"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${carriage_depth} ${carriage_width} ${carriage_height}"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="${carriage_mass}"
+                            x="${carriage_depth}" y="${carriage_width}" z="${carriage_height}">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+    <gazebo reference="fork_carriage"><material>Gazebo/DarkGray</material></gazebo>
+
+    <!-- ================================================================
+         FORK TINE'LARI – sol ve sağ maşa
+    ================================================================ -->
+    <xacro:macro name="fork_tine" params="prefix y_sign">
+        <joint name="${prefix}_fork_joint" type="fixed">
+            <parent link="fork_carriage"/>
+            <child  link="${prefix}_fork"/>
+            <origin xyz="${fork_length/2}
+                         ${y_sign * fork_y_offset}
+                         ${-(carriage_height + fork_height)/2}"
+                    rpy="0 0 0"/>
+        </joint>
+        <link name="${prefix}_fork">
+            <visual>
+                <geometry>
+                    <box size="${fork_length} ${fork_width} ${fork_height}"/>
+                </geometry>
+                <material name="dark_gray"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="${fork_length} ${fork_width} ${fork_height}"/>
+                </geometry>
+            </collision>
+            <xacro:inertial_box mass="${fork_mass}"
+                                x="${fork_length}" y="${fork_width}" z="${fork_height}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_box>
+        </link>
+        <gazebo reference="${prefix}_fork"><material>Gazebo/DarkGray</material></gazebo>
+    </xacro:macro>
+
+    <xacro:fork_tine prefix="left"  y_sign=" 1"/>
+    <xacro:fork_tine prefix="right" y_sign="-1"/>
+
+    <!-- ================================================================
+         DRIVE WHEELS – arka, diferansiyel sürüş
+         base_link'e göre: x=0, y=±0.275 m, tekerlek aksı z=0.075 m
+    ================================================================ -->
     <joint name="left_wheel_joint" type="continuous">
         <parent link="base_link"/>
-        <child link="left_wheel"/>
-        <origin xyz="0 ${wheel_offset_y} 0" rpy="-${pi/2} 0 0" />
+        <child  link="left_wheel"/>
+        <origin xyz="0 ${wheel_y_offset} ${wheel_radius}" rpy="${-pi/2} 0 0"/>
         <axis xyz="0 0 1"/>
     </joint>
     <link name="left_wheel">
@@ -86,26 +233,24 @@
             <geometry>
                 <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
             </geometry>
-            <material name="blue"/>
+            <material name="black"/>
         </visual>
         <collision>
             <geometry>
                 <sphere radius="${wheel_radius}"/>
             </geometry>
         </collision>
-        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}" radius="${wheel_radius}">
+        <xacro:inertial_cylinder mass="${wheel_mass}"
+                                 length="${wheel_thickness}" radius="${wheel_radius}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_cylinder>
     </link>
-    <gazebo reference="left_wheel">
-        <material>Gazebo/Blue</material>
-    </gazebo>
+    <gazebo reference="left_wheel"><material>Gazebo/Black</material></gazebo>
 
-    <!-- RIGHT WHEEL LINK -->
     <joint name="right_wheel_joint" type="continuous">
         <parent link="base_link"/>
-        <child link="right_wheel"/>
-        <origin xyz="0 ${-wheel_offset_y} 0" rpy="${pi/2} 0 0" />
+        <child  link="right_wheel"/>
+        <origin xyz="0 ${-wheel_y_offset} ${wheel_radius}" rpy="${pi/2} 0 0"/>
         <axis xyz="0 0 -1"/>
     </joint>
     <link name="right_wheel">
@@ -113,94 +258,109 @@
             <geometry>
                 <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
             </geometry>
-            <material name="blue"/>
+            <material name="black"/>
         </visual>
         <collision>
             <geometry>
                 <sphere radius="${wheel_radius}"/>
             </geometry>
         </collision>
-        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}" radius="${wheel_radius}">
+        <xacro:inertial_cylinder mass="${wheel_mass}"
+                                 length="${wheel_thickness}" radius="${wheel_radius}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_cylinder>
     </link>
-    <gazebo reference="right_wheel">
-        <material>Gazebo/Blue</material>
-    </gazebo>
+    <gazebo reference="right_wheel"><material>Gazebo/Black</material></gazebo>
 
-    <!-- CASTER WHEEL LINK -->
-    <joint name="caster_wheel_joint" type="fixed">
-        <parent link="chassis"/>
-        <child link="caster_wheel"/>
-        <origin xyz="${caster_wheel_offset_x} 0 ${caster_wheel_offset_z}"/>
+    <!-- ================================================================
+         ÖN YÜK TEKERLEKLERİ – fork altında, döner (castor)
+    ================================================================ -->
+    <xacro:macro name="load_wheel" params="prefix y_sign">
+        <joint name="${prefix}_load_wheel_joint" type="fixed">
+            <parent link="base_link"/>
+            <child  link="${prefix}_load_wheel"/>
+            <origin xyz="${caster_x_fwd} ${y_sign * caster_y_offset} ${caster_radius}"
+                    rpy="0 0 0"/>
+        </joint>
+        <link name="${prefix}_load_wheel">
+            <visual>
+                <geometry><sphere radius="${caster_radius}"/></geometry>
+                <material name="black"/>
+            </visual>
+            <collision>
+                <geometry><sphere radius="${caster_radius}"/></geometry>
+            </collision>
+            <xacro:inertial_sphere mass="${caster_mass}" radius="${caster_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_sphere>
+        </link>
+        <gazebo reference="${prefix}_load_wheel">
+            <material>Gazebo/Black</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:load_wheel prefix="front_left"  y_sign=" 1"/>
+    <xacro:load_wheel prefix="front_right" y_sign="-1"/>
+
+    <!-- ================================================================
+         GÜVENLIK LEDLERI – ön/arka görsel göstergeler
+         Gerçek sistemdeki durum ışıkları simülasyonu
+    ================================================================ -->
+    <joint name="front_led_joint" type="fixed">
+        <parent link="mast"/>
+        <child  link="front_led"/>
+        <origin xyz="${mast_depth/2 + 0.005} 0 ${-mast_height/2 + 0.08}" rpy="0 0 0"/>
     </joint>
-    <link name="caster_wheel">
+    <link name="front_led">
         <visual>
-            <geometry>
-                <sphere radius="${caster_wheel_radius}"/>
-            </geometry>
-            <material name="white"/>
+            <geometry><sphere radius="0.015"/></geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <gazebo reference="front_led"><material>Gazebo/RedGlow</material></gazebo>
+
+    <!-- ================================================================
+         ARKA SARHOŞ TEKER – gövde arkasında denge sağlar
+         Ağırlık merkezi arka tekerlek gerisinde olduğundan zorunludur.
+    ================================================================ -->
+    <joint name="rear_caster_joint" type="fixed">
+        <parent link="chassis"/>
+        <child  link="rear_caster"/>
+        <!-- chassis frame'de: gövdenin tam arka-alt köşesi -->
+        <origin xyz="${-body_length/2 + caster_radius} 0 ${-body_height/2 + caster_radius - wheel_radius}"
+                rpy="0 0 0"/>
+    </joint>
+    <link name="rear_caster">
+        <visual>
+            <geometry><sphere radius="${caster_radius}"/></geometry>
+            <material name="black"/>
         </visual>
         <collision>
-            <geometry>
-                <sphere radius="${caster_wheel_radius}"/>
-            </geometry>
+            <geometry><sphere radius="${caster_radius}"/></geometry>
         </collision>
-        <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
+        <xacro:inertial_sphere mass="${caster_mass}" radius="${caster_radius}">
             <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:inertial_sphere>
     </link>
-    <gazebo reference="caster_wheel">
-        <material>Gazebo/White</material>
+    <gazebo reference="rear_caster">
+        <material>Gazebo/Black</material>
         <mu1 value="0.001"/>
         <mu2 value="0.001"/>
     </gazebo>
 
-    <!-- ============================================================
-         KARGO TAŞIMA ÇUBUKLARI
-         Robotun üst yüzeyinin 4 köşesinde dik kare kesitli çubuklar.
-         Amaç: gerçek robottaki köşe taşıma sistemini simüle etmek.
-
-         Nav2 / Haritalama notu:
-         Tüm çubuklar lidar merkezine olan yatay mesafe < 0.3 m
-         (min_range sınırı) olduğundan lidar tarafından görülmez;
-         haritaya ve costmap'e olumsuz etkisi yoktur.
-    ============================================================ -->
-    <xacro:property name="pole_size"   value="0.02"/>
-    <xacro:property name="pole_height" value="0.30"/>
-
-    <xacro:macro name="cargo_pole" params="prefix x y">
-        <joint name="${prefix}_pole_joint" type="fixed">
-            <parent link="chassis"/>
-            <child link="${prefix}_pole"/>
-            <!-- köşe konumu, z = şasi tepesi + çubuğun yarı boyu -->
-            <origin xyz="${x} ${y} ${chassis_height + pole_height/2}" rpy="0 0 0"/>
-        </joint>
-        <link name="${prefix}_pole">
-            <visual>
-                <geometry>
-                    <box size="${pole_size} ${pole_size} ${pole_height}"/>
-                </geometry>
-                <material name="red"/>
-            </visual>
-            <collision>
-                <geometry>
-                    <box size="${pole_size} ${pole_size} ${pole_height}"/>
-                </geometry>
-            </collision>
-            <xacro:inertial_box mass="0.05" x="${pole_size}" y="${pole_size}" z="${pole_height}">
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-            </xacro:inertial_box>
-        </link>
-        <gazebo reference="${prefix}_pole">
-            <material>Gazebo/Red</material>
-        </gazebo>
-    </xacro:macro>
-
-    <!-- 4 köşe: ön-sol, ön-sağ, arka-sol, arka-sağ -->
-    <xacro:cargo_pole prefix="front_left"  x="${chassis_length}"  y="${chassis_width/2}"/>
-    <xacro:cargo_pole prefix="front_right" x="${chassis_length}"  y="${-chassis_width/2}"/>
-    <xacro:cargo_pole prefix="back_left"   x="0.0"               y="${chassis_width/2}"/>
-    <xacro:cargo_pole prefix="back_right"  x="0.0"               y="${-chassis_width/2}"/>
+    <joint name="rear_led_joint" type="fixed">
+        <parent link="chassis"/>
+        <child  link="rear_led"/>
+        <origin xyz="${-body_length/2 + 0.005} 0 ${body_height/4}" rpy="0 0 0"/>
+    </joint>
+    <link name="rear_led">
+        <visual>
+            <geometry><sphere radius="0.015"/></geometry>
+            <material name="blue"/>
+        </visual>
+    </link>
+    <gazebo reference="rear_led"><material>Gazebo/BlueGlow</material></gazebo>
 
 </robot>
