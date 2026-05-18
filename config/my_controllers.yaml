@@ -6,8 +6,11 @@ controller_manager:
     diff_cont:
       type: diff_drive_controller/DiffDriveController
 
-    joint_broad:
+    joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+
+    fork_position_controller:
+      type: position_controllers/JointGroupPositionController
 
 diff_cont:
   ros__parameters:
@@ -18,12 +21,12 @@ diff_cont:
 
     left_wheel_names: ['left_wheel_joint']
     right_wheel_names: ['right_wheel_joint']
-    wheel_separation: 0.297
-    wheel_radius: 0.033
+    wheel_separation: 0.56
+    wheel_radius: 0.065
 
     use_stamped_vel: false
 
-    # open_loop: false    
+    # open_loop: false
 
     # wheels_per_side: x
     # wheel_separation_multiplier: x
@@ -39,7 +42,6 @@ diff_cont:
     # cmd_vel_timeout: x
     # publish_limited_velocity: x
     # velocity_rolling_window_size: x
-    
 
     # linear.x.has_velocity_limits: false
     # linear.x.has_acceleration_limits: false
@@ -61,8 +63,12 @@ diff_cont:
     # angular.z.max_jerk: NAN
     # angular.z.min_jerk: NAN
 
-
-
-
-# joint_broad:
-#   ros__parameters:
+fork_position_controller:
+  ros__parameters:
+    joints:
+      - fork_carriage_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity

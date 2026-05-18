@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Fork pozisyon kontrolü (PD + gravity compensation).
+"""
+Fork pozisyon kontrolü (PD + gravity compensation).
 
 Strateji:
   - /joint_states'ten fork pozisyonunu okur
@@ -26,17 +27,17 @@ from gazebo_msgs.srv import ApplyJointEffort, JointRequest
 from sensor_msgs.msg import JointState
 from builtin_interfaces.msg import Duration, Time
 
-JOINT       = 'fork_carriage_joint'
-STEP        = 0.02
-MIN_POS     = 0.0
-MAX_POS     = 0.30
+JOINT = 'fork_carriage_joint'
+STEP = 0.02
+MIN_POS = 0.0
+MAX_POS = 0.30
 
 # PD kazançları (mass=3.1 kg, damping=200 ile uyumlu)
-KP          = 1500.0   # N/m
-KD          = 400.0    # N·s/m
-GRAV_COMP   = 32.0     # N – fork+carriage ağırlığı (~3.1 kg × 9.81)
-EFFORT_MIN  = -300.0
-EFFORT_MAX  =  500.0
+KP = 1500.0   # N/m
+KD = 400.0    # N·s/m
+GRAV_COMP = 32.0     # N – fork+carriage ağırlığı (~3.1 kg × 9.81)
+EFFORT_MIN = -300.0
+EFFORT_MAX = 500.0
 
 CTRL_RATE_HZ = 50.0
 
@@ -56,7 +57,7 @@ class ForkTeleop(Node):
 
         self.position = 0.0
         self.velocity = 0.0
-        self.target   = 0.0
+        self.target = 0.0
         self._first_apply_logged = False
         self._control_active = False
 

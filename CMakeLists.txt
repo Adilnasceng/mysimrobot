@@ -21,7 +21,32 @@ find_package(ament_cmake_python REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_flake8 REQUIRED)
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  find_package(ament_cmake_pep257 REQUIRED)
+  find_package(ament_cmake_xmllint REQUIRED)
+
+  set(AMENT_LINT_AUTO_FILE_EXCLUDE
+    build
+    install
+    log
+  )
+  set(AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_copyright
+    ament_cmake_cppcheck
+    ament_cmake_cpplint
+    ament_cmake_flake8
+    ament_cmake_lint_cmake
+    ament_cmake_pep257
+    ament_cmake_uncrustify
+    ament_cmake_xmllint
+  )
   ament_lint_auto_find_test_dependencies()
+
+  ament_flake8(--exclude build install log)
+  ament_lint_cmake(CMakeLists.txt)
+  ament_pep257(--exclude build install log)
+  ament_xmllint(--exclude build install log)
 endif()
 
 install(
