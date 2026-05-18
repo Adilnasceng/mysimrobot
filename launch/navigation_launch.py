@@ -117,7 +117,7 @@ def generate_launch_description():
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
-                remappings=remappings + [('cmd_vel', 'cmd_vel_nav')]),
+                remappings=remappings + [('cmd_vel', 'cmd_vel_nav_raw')]),
             Node(
                 package='nav2_smoother',
                 executable='smoother_server',
@@ -178,7 +178,7 @@ def generate_launch_description():
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
                 remappings=remappings +
-                        [('cmd_vel', 'cmd_vel_nav'), ('cmd_vel_smoothed', 'cmd_vel')]),
+                        [('cmd_vel', 'cmd_vel_nav_raw'), ('cmd_vel_smoothed', 'cmd_vel_nav')]),
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
@@ -195,9 +195,14 @@ def generate_launch_description():
                 output='screen',
                 parameters=[{
                     'use_sim_time': use_sim_time,
+                    'scan_topic': '/scan',
+                    'map_topic': '/map',
+                    'cmd_vel_topic': '/cmd_vel_nav',
+                    'obstacle_cmd_topic': '/cmd_vel_obstacle',
                     'obstacle_distance': 1.0,
                     'obstacle_angle': 0.524,
-                    'wait_duration': 15.0,
+                    'min_linear_speed': 0.03,
+                    'map_obstacle_padding': 0.12,
                 }]),
         ]
     )
@@ -211,7 +216,7 @@ def generate_launch_description():
                 plugin='nav2_controller::ControllerServer',
                 name='controller_server',
                 parameters=[configured_params],
-                remappings=remappings + [('cmd_vel', 'cmd_vel_nav')]),
+                remappings=remappings + [('cmd_vel', 'cmd_vel_nav_raw')]),
             ComposableNode(
                 package='nav2_smoother',
                 plugin='nav2_smoother::SmootherServer',
@@ -248,7 +253,7 @@ def generate_launch_description():
                 name='velocity_smoother',
                 parameters=[configured_params],
                 remappings=remappings +
-                           [('cmd_vel', 'cmd_vel_nav'), ('cmd_vel_smoothed', 'cmd_vel')]),
+                           [('cmd_vel', 'cmd_vel_nav_raw'), ('cmd_vel_smoothed', 'cmd_vel_nav')]),
             ComposableNode(
                 package='nav2_lifecycle_manager',
                 plugin='nav2_lifecycle_manager::LifecycleManager',
