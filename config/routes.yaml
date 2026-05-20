@@ -1,0 +1,23 @@
+routes:
+  baslangic:
+    frame_id: map
+    poses:
+    - name: hedef
+      x: -4.4215
+      y: -0.3419
+      yaw: 0.4186
+  rota1:
+    frame_id: map
+    poses:
+    - name: wp1
+      x: -1.2791
+      y: -2.2714
+      yaw: 2.1694
+    - name: wp2
+      x: -0.5962
+      y: 1.6545
+      yaw: 2.7449
+    - name: wp3
+      x: 3.6987
+      y: -0.119
+      yaw: 3.0

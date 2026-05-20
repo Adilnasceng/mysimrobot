@@ -37,6 +37,12 @@ For **every new terminal**, run:
 source install/setup.bash
 ```
 
+For the full terminal command guide, including Nav2 startup, route saving, and route replay, see:
+
+```text
+KULLANIM_KOMUTLARI.md
+```
+
 ---
 
 ## 🧪 Running the Simulation
